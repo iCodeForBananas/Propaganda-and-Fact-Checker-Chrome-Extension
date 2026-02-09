@@ -39,6 +39,30 @@
     button:hover {
       background: #0081d9;
     }
+    #pauseBtn {
+      background: #666;
+    }
+    #pauseBtn:hover {
+      background: #555;
+    }
+    #pauseBtn.paused {
+      background: #4caf50;
+    }
+    #pauseBtn.paused:hover {
+      background: #43a047;
+    }
+    #debugBtn {
+      background: #9c27b0;
+    }
+    #debugBtn:hover {
+      background: #7b1fa2;
+    }
+    #debugBtn.active {
+      background: #ff9800;
+    }
+    #debugBtn.active:hover {
+      background: #f57c00;
+    }
     .status {
       margin-top: 10px;
       font-size: 12px;
@@ -63,6 +87,8 @@
   <input type="password" id="apiKey" placeholder="Enter your API key">
   
   <button id="save">Save Settings</button>
+  <button id="pauseBtn">⏸️ Pause Scanning</button>
+  <button id="debugBtn">🐛 Debug Mode</button>
   
   <div class="status" id="status"></div>
   
