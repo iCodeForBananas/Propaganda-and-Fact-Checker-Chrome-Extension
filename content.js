@@ -31,7 +31,7 @@ const getCacheKey = (user, text) => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32bit integer
   }
   return `${user}_${hash}`;
@@ -79,7 +79,7 @@ async function processBatch() {
     stopScanner();
     return;
   }
-  
+
   console.log("[IG Scanner] ⏰ processBatch triggered, queue length:", queue.length);
 
   // Check if paused
@@ -90,7 +90,7 @@ async function processBatch() {
     stopScanner();
     return;
   }
-  
+
   if (scannerPaused) {
     console.log("[IG Scanner] ⏸️ Scanner is paused, skipping batch processing");
     return;
@@ -120,8 +120,14 @@ async function processBatch() {
   if (debugMode) {
     console.log("[IG Scanner] 🐛 DEBUG MODE - Would send to API:");
     console.log("[IG Scanner] 🐛 Prompt:", prompt);
-    console.log("[IG Scanner] 🐛 Comments data:", current.map((i) => ({ user: i.user, text: i.text, cacheKey: i.cacheKey })));
-    console.log("[IG Scanner] 🐛 Request body:", JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }, null, 2));
+    console.log(
+      "[IG Scanner] 🐛 Comments data:",
+      current.map((i) => ({ user: i.user, text: i.text, cacheKey: i.cacheKey })),
+    );
+    console.log(
+      "[IG Scanner] 🐛 Request body:",
+      JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }, null, 2),
+    );
     // Apply a mock rating in debug mode so we can see the UI working
     current.forEach((item) => {
       const mockAnalysis = { rating: 5, fact: "[DEBUG] API call skipped" };
@@ -200,7 +206,7 @@ const scan = async () => {
     stopScanner();
     return;
   }
-  
+
   scanCount++;
   console.log("[IG Scanner] 🔍 Scan #" + scanCount + " started...");
 
@@ -212,7 +218,7 @@ const scan = async () => {
     stopScanner();
     return;
   }
-  
+
   if (scannerPaused) {
     console.log("[IG Scanner] ⏸️ Scanner is paused, skipping scan");
     return;
@@ -227,21 +233,21 @@ const scan = async () => {
   // Handles both feed view and post modal view
   const selectors = [
     // Post modal view - comment list items (most specific)
-    'li._a9zj._a9zl',
+    "li._a9zj._a9zl",
     'li[class*="_a9zj"]',
     // Post modal - comment rows inside ul
     'ul._a9ym > div[role="button"]',
     'ul._a9z6 > div[role="button"]',
     // Comment wrapper divs
-    'div._a9zm',
+    "div._a9zm",
     // Feed view - comment containers
     'ul > div > div[class*="x78zum5"]',
     // Generic Instagram comment patterns
     'div[class*="x1nhvcw1"]',
     'div[class*="xjbqb8w"]',
     // Article-based comments
-    'article ul > div > div',
-    'article li > div._a9zm',
+    "article ul > div > div",
+    "article li > div._a9zm",
   ];
 
   const nodes = document.querySelectorAll(selectors.join(", "));
@@ -274,38 +280,44 @@ const scan = async () => {
     }
 
     // Find username - Instagram uses links for usernames
-    const userLink = node.querySelector('a[href^="/"][role="link"]') || 
-                     node.querySelector('h3 a[href^="/"]') ||
-                     node.querySelector('a[href^="/"]');
+    const userLink =
+      node.querySelector('a[href^="/"][role="link"]') ||
+      node.querySelector('h3 a[href^="/"]') ||
+      node.querySelector('a[href^="/"]');
     let user = userLink?.innerText?.trim();
-    
+
     // Clean username (remove any extra text)
     if (user) {
-      user = user.split('\n')[0].trim();
+      user = user.split("\n")[0].trim();
     }
 
     // Find comment text - try specific Instagram classes first, then fallback
     let text = "";
-    
+
     // Post modal: comment text in span with _ap3a class
-    const commentSpan = node.querySelector('span._ap3a._aaco._aacu._aacx._aad7._aade') ||
-                        node.querySelector('span[class*="_ap3a"][class*="_aaco"]') ||
-                        node.querySelector('div._a9zr span[dir="auto"]');
-    
+    const commentSpan =
+      node.querySelector("span._ap3a._aaco._aacu._aacx._aad7._aade") ||
+      node.querySelector('span[class*="_ap3a"][class*="_aaco"]') ||
+      node.querySelector('div._a9zr span[dir="auto"]');
+
     if (commentSpan) {
       text = commentSpan.innerText?.trim() || "";
     }
-    
+
     // Fallback: Find text spans and get the first meaningful one
     if (!text) {
       const textSpans = node.querySelectorAll('span[dir="auto"]');
       for (const span of textSpans) {
         const spanText = span.innerText?.trim();
         // Skip if it's just the username, too short, or looks like metadata
-        if (spanText && spanText !== user && spanText.length > 2 && 
-            !spanText.match(/^\d+[dhwm]?$/) && // Skip timestamps like "6d"
-            !spanText.match(/^\d+ likes?$/i) &&
-            !spanText.match(/^Reply$/i)) {
+        if (
+          spanText &&
+          spanText !== user &&
+          spanText.length > 2 &&
+          !spanText.match(/^\d+[dhwm]?$/) && // Skip timestamps like "6d"
+          !spanText.match(/^\d+ likes?$/i) &&
+          !spanText.match(/^Reply$/i)
+        ) {
           text = spanText;
           break;
         }
@@ -328,10 +340,10 @@ const scan = async () => {
 
     node.dataset.scanned = "true";
     // Also mark all descendants as scanned to prevent child elements from being processed
-    node.querySelectorAll('*').forEach(child => child.dataset.scanned = "true");
-    
+    node.querySelectorAll("*").forEach((child) => (child.dataset.scanned = "true"));
+
     newCommentsFound++;
-    
+
     const cacheKey = getCacheKey(user, text);
     console.log(
       "[IG Scanner] 📝 New comment found - User:",
